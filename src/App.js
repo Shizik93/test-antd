@@ -1,48 +1,58 @@
 import './App.css';
 import {Button, Form, Input} from "antd";
-import {useEffect, useRef} from "react";
+import {useEffect, useRef, useState} from "react";
 
 const {TextArea} = Input
 
 function App() {
+    const [value, setValue] = useState('')
     const [form] = Form.useForm()
     const ref = useRef()
-    const events=['null']
+    const timoutId = useRef(0)
+    const [flag, setFlag] = useState(false)
+    const events = ['null']
     useEffect(() => {
-        const callback = (m) => {
+        const callback = (mutationList) => {
             events.push('observer')
-            const [node] = m
-            form.setFieldsValue({test: node.target.value})
+            const [textarea] = mutationList
+            form.setFieldsValue({test: textarea.target.value})
         }
         const observer = new MutationObserver(callback)
         observer.observe(ref.current, {attributes: true, childList: true, subtree: true})
         return () => observer.disconnect()
     }, []);
-    return (
-        <div className="App">
-            <Form onFinish={(values) => {
-                alert(events)
-                console.log(values)
-            }} form={form}>
-                <Form.Item style={{marginTop: 100}} name='test'>
-                    <TextArea onKeyDown={(event) => {
-                        if (!(event?.keyCode === 86 && event?.ctrlKey)) {
-                            event?.preventDefault?.();
-                            event?.stopPropagation?.();
+    useEffect(() => {
+        timoutId.current = setTimeout(() => setFlag(true), 3000)
+        return () => clearTimeout(timoutId.current)
+    }, []);
+    console.log(ref.current)
+    return (<div className="App">
+        <div>Flag:{flag.toString()}</div>
+        <Form onFinish={(values) => {
+            alert(events)
+            console.log(values)
+        }} form={form}>
+            <Form.Item style={{marginTop: 100}} name='test'>
+                <TextArea onKeyDown={(event) => {
+                    if (!(event?.keyCode === 86 && event?.ctrlKey)) {
+                        event?.preventDefault?.();
+                        event?.stopPropagation?.();
 
-                            return '';
-                        }
-                    }}/>
-                </Form.Item>
-                <Button htmlType='submit' data-test="submit">Отправить</Button>
-            </Form>
-            <textarea style={{display: 'none'}} data-test='textarea' ref={ref}
-                      onChange={(e) => {
-                          events.push('onChange')
-                          form.setFieldsValue({test: e.target.value})
-                      }}></textarea>
-        </div>
-    );
+                        return '';
+                    }
+                }}/>
+            </Form.Item>
+            <Button htmlType='submit' data-test="submit">Отправить</Button>
+        </Form>
+        <textarea id={'testText'}
+                  value={value}
+                  data-test='textarea' ref={ref}
+                  onChange={(e) => {
+                      setValue(e.target.value)
+                      events.push('onChange')
+                      form.setFieldsValue({test: e.target.value})
+                  }}></textarea>
+    </div>);
 }
 
 export default App;
